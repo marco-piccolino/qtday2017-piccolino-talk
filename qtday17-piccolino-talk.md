@@ -64,7 +64,7 @@ It depends.
 * Cases where WorkerScripts can be used
 * Programmers skillset
 
-<br/><br/><br/><br/><br/>
+<br/><br/>
 Newer Qt libraries expose very rich QML APIs <br/>(e.g. Qt3D, see Peppe's talk)
 
 ---
@@ -152,12 +152,10 @@ qtday2017-app [template: subdirs]
 ## Usecases: scenario test/1
 
 ```qml
-import QtQml 2.2
-import QtTest 1.0
-import "."
-
+// tst_browse_talks.qml
+...
 TestCase {
-    name: "browse_talks" // test name; useful for output and AutoTest plugin
+    name: "browse_talks" // test name; useful for output & AutoTest plugin
 
     property var usecases
     Component {
@@ -167,8 +165,9 @@ TestCase {
         }
     }
 
-    function initTestCase() {Steps.testcase = this} // pass testcase env. to Steps
+    function initTestCase() {Steps.testcase = this} // expose testcase to Steps
     function cleanupTestCase() {Steps.testcase = null}
+    ...
 ```
 ---
 
@@ -181,7 +180,6 @@ TestCase {
     function cleanup() {
         browse_talks.destroy()
     }
-
     function test_browse_talks__one_or_more() {
         //Given
         Steps.there_is_at_least_one_talk()
@@ -192,7 +190,6 @@ TestCase {
         // And
         Steps.the_list_of_talks_cointains_at_least_one_talk()
     }
-}
 ```
 
 ---
@@ -268,6 +265,21 @@ Object { // patched QtObject; accepts children types
 
 ---
 
+## About repositories
+
+Interfaces for data input/output and persistence
+
+Examples:
+
+* memory (code)
+* JSON file
+* local storage
+* web service
+
+Allow entities not to be "polluted" by I/O technologies
+
+---
+
 ## Repos: add test repo/1
 
 ```qml
@@ -276,20 +288,18 @@ QtObject {
     signal dataRead(var records)
     function readData() {
         dataRead([
-                     {"title":"From Now to Qt 6 -
-                      The Current Roadmap of Qt",
-                         "author":"Artem Sidyakin"},
-                     {"title":"Qt Quick Controls 2:
-                      gli strumenti giusti per le interfacce embedded",
-                         "author":"Luca Ottaviano"},
-                     {"title":"Case Study:
-                     Starting with QT - dall'idea al prodotto",
-                         "author":"Edoardo Slaviero"}
-                 ]);
-    }
-}
+             {"tid":1,"title":"From Now to Qt 6 -
+              The Current Roadmap of Qt",
+                 "author":"Artem Sidyakin"},
+             {"tid":2,"title":"Qt Quick Controls 2:
+              gli strumenti giusti per le interfacce embedded",
+                 "author":"Luca Ottaviano"},
+             {"tid":3,"title":"Case Study:
+             Starting with QT - dall'idea al prodotto",
+                 "author":"Edoardo Slaviero"}
+         ]);
+    ...
 ```
-
 ---
 
 ## Repos: add test repo/2
@@ -358,6 +368,14 @@ Connections {
 
 ---
 
+## Repos: add test repo/5
+
+* Swapping `TalksLocal3` with something like `TalksREST` or `TalksSqlite` is a one-liner
+
+* Can also swap in tests with other repos, e.g. `TalksLocal0` (no talks)
+
+---
+
 ## Usecases: implement
 
 ```qml
@@ -407,19 +425,25 @@ ApplicationWindow {
 ```qml
 // WelcomeViewer.qml
 ...
-Button {
-    onClicked: Usecases.browse_talks.run()
-}
+browseTalksButton.onClicked: Usecases.browse_talks.run()
 // TalksViewer.qml
 ...
-ListView {
-    model: Entities.talks.list
-    delegate: ItemDelegate {
+talksList.model: Entities.talks.list
+talksList.delegate: ItemDelegate {
         width: parent.width
         text: "%1 %2".arg(model.author).arg(model.title)
+        onClicked: Usecases.checkTalkDetails(model.tid)
     }
 }
 ```
+---
+
+## Client: what about presenters?
+
+* So far I haven't needed them
+* property bindings on entities and helper functions (for formatting etc.) seem enough
+* Client could be made completely unaware of entities and usecases via a register of usecase actions (signals) and Presenters
+
 ---
 
 ## Benefits
@@ -451,15 +475,21 @@ ListView {
 * No! It can all be done with Qt's C++ APIs as well!
 * Or, mixing QML and C++ (QVariantMap is your friend)
 * Or, prototyping with the former and deploying the latter
+* Can also have your entities as pure C++/stdlib classes to enhance portability
+* Also: Python (PyQt, PySide) & Go bindings
 
 ---
 
 ## Resources
+[.autoscale: true]
 
 ![](http://unsplash.com/photos/6GjHwABuci4/download?force=true)
 
-__Code__
+__Demo code__
 [tinyurl.com/qtday17app](https://tinyurl.com/qtday17app)
+
+__AutoTest Plugin__
+QtCreator > About plugins... > AutoTest
 
 __Clean Architecture book__ by Uncle Bob (sept. 2017)
 [tinyurl.com/CleanArchBook](https://tinyurl.com/CleanArchBook)
@@ -469,5 +499,3 @@ __QtMob Slack__ (\#architecture)
 
 __JSON Model for QML__ (by Cutehacks)
 [github.com/Cutehacks/gel](https://github.com/Cutehacks/gel)
-
----
